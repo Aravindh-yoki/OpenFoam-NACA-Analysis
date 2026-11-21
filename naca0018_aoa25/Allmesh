@@ -1,0 +1,37 @@
+#!/bin/sh
+# Step A: 3-D slab with snappyHexMesh  ->  Step B: extrude the front patch into a 2-D mesh
+cd "${0%/*}" || exit 1
+
+if [ ! -f mesh3D/constant/triSurface/airfoil.stl ]; then
+    echo "Missing mesh3D/constant/triSurface/airfoil.stl  - run stl_to_openfoam.py first"; exit 1
+fi
+
+# ---------- A. snappyHexMesh in mesh3D ----------
+cd mesh3D || exit 1
+mkdir -p constant/geometry
+cp constant/triSurface/airfoil.stl constant/geometry/      # newer OpenFOAM versions read constant/geometry
+rm -rf 0 [1-9]* constant/polyMesh log.*
+blockMesh        > log.blockMesh  2>&1 || { echo "blockMesh failed";  exit 1; }
+snappyHexMesh -overwrite > log.snappyHexMesh 2>&1 || { echo "snappyHexMesh failed - see mesh3D/log.snappyHexMesh"; exit 1; }
+checkMesh        > log.checkMesh3D 2>&1
+echo "3-D slab done:  $(grep -m1 'cells:' log.checkMesh3D)"
+
+# ---------- B. extrude front patch -> 2-D mesh in run2D ----------
+cd ../run2D || exit 1
+rm -rf constant/polyMesh log.*
+extrudeMesh      > log.extrudeMesh 2>&1 || { echo "extrudeMesh failed - see run2D/log.extrudeMesh"; exit 1; }
+
+# front/back must be 'empty' for a 2-D solution
+python3 - <<'PY'
+import re
+f = "constant/polyMesh/boundary"
+s = open(f).read()
+for name in ("front", "back"):
+    s = re.sub(r"(\n\s*%s\s*\{[^}]*?type\s+)(\w+)(;)" % name, r"\1empty\3", s, flags=re.S)
+    s = re.sub(r"(\n\s*%s\s*\{[^}]*?)\n\s*inGroups[^\n]*" % name, r"\1", s, flags=re.S)
+open(f, "w").write(s)
+PY
+checkMesh        > log.checkMesh2D 2>&1
+echo "2-D mesh done:  $(grep -m1 'cells:' log.checkMesh2D)"
+echo "Patches: $(grep -E '^    [A-Za-z]+$' constant/polyMesh/boundary | tr -d ' ' | tr '\n' ' ')"
+echo "Check log.checkMesh2D shows 'Mesh OK.'"

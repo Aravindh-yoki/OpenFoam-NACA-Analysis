@@ -1,0 +1,8 @@
+#!/bin/sh
+cd "${0%/*}/run2D" || exit 1
+rm -rf [1-9]* postProcessing log.simpleFoam
+foamRun -solver incompressibleFluid > log.simpleFoam 2>&1
+echo "solver finished - last lines:"; tail -5 log.simpleFoam
+(foamPostProcess -func yPlus -latestTime || postProcess -func yPlus -latestTime) > log.yPlus 2>&1
+echo "y+ on the foil:"; grep -i -A3 airfoil log.yPlus | head -6
+cd .. && python3 average_coeffs.py run2D

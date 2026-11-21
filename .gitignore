@@ -1,0 +1,12 @@
+# time directories (numeric names), except 0 and 0.orig
+[1-9]*/
+0.[0-9]*/
+processor*/
+postProcessing/
+log.*
+*.foam
+*.OpenFOAM
+VTK/
+dynamicCode/
+constant/polyMesh/
+**/constant/polyMesh/

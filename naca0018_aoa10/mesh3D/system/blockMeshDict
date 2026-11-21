@@ -1,0 +1,50 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+// Background slab for snappyHexMesh.   c = 0.16923 m, LE at origin
+// x: -5c ... +10c   y: -5c ... +5c   z: one 0.05 m cell (becomes 2-D later)
+// Base cell = 0.05 m  ->  51 x 34 x 1 cells
+convertToMeters 1;
+
+vertices
+(
+    (-0.85 -0.85 -0.025)    // 0
+    ( 1.70 -0.85 -0.025)    // 1
+    ( 1.70  0.85 -0.025)    // 2
+    (-0.85  0.85 -0.025)    // 3
+    (-0.85 -0.85  0.025)    // 4
+    ( 1.70 -0.85  0.025)    // 5
+    ( 1.70  0.85  0.025)    // 6
+    (-0.85  0.85  0.025)    // 7
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (51 34 1) simpleGrading (1 1 1)
+);
+
+edges ();
+
+boundary
+(
+    farfield
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)       // x min
+            (1 2 6 5)       // x max
+            (0 1 5 4)       // y min
+            (3 7 6 2)       // y max
+        );
+    }
+    front { type patch; faces ((0 3 2 1)); }   // z min
+    back  { type patch; faces ((4 5 6 7)); }   // z max
+);
+
+mergePatchPairs ();

@@ -1,0 +1,61 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+
+application     foamRun;
+solver          incompressibleFluid;
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         3000;
+deltaT          1;
+writeControl    timeStep;
+writeInterval   500;
+purgeWrite      2;
+writeFormat     ascii;
+writePrecision  8;
+timeFormat      general;
+timePrecision   6;
+runTimeModifiable true;
+
+// ---- constants used below (edit together with 0/U, 0/k, 0/omega) ----
+//  U_inf = 1 m/s      rho = 998.2 kg/m3      chord c = 0.16923 m
+//  Aref  = c * thickness = 0.16923 * 0.01 = 0.0016923 m2   (thickness = extrudeMeshDict)
+//  CofR  = quarter chord (0.25 c, 0, 0) = (0.0423075 0 0)
+
+functions
+{
+    forceCoeffs1
+    {
+        type            forceCoeffs;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        patches         (airfoil);
+        rho             rhoInf;
+        rhoInf          998.2;
+        liftDir         (0 1 0);
+        dragDir         (1 0 0);
+        CofR            (0.0423075 0 0);
+        pitchAxis       (0 0 1);
+        magUInf         1;
+        lRef            0.16923;
+        Aref            0.0016923;
+    }
+
+    forces1
+    {
+        type            forces;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        patches         (airfoil);
+        rho             rhoInf;
+        rhoInf          998.2;
+        CofR            (0.0423075 0 0);
+    }
+}
